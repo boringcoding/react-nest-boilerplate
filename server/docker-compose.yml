@@ -1,0 +1,35 @@
+version: '3'
+services:
+  postgres:
+    container_name: postgres_auth_boiler
+    image: postgres:latest
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg:/data/postgres
+    env_file:
+      - .env
+    networks:
+      - postgres
+
+  pgadmin:
+    links:
+      - postgres:postgres
+    container_name: pgadmin_auth_boiler
+    image: dpage/pgadmin4
+    ports:
+      - '8080:80'
+    volumes:
+      - pga:/root/.pgadmin
+    env_file:
+      - .env
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  pg:
+  pga:
