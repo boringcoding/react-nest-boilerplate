@@ -13,11 +13,13 @@ export const App = observer(() => {
 
   if (store.isLoading) {
     return <div>loading</div>
-  }
-  return (
-    <div>
-      <h1>{store.isAuth ? 'Auth' : 'Not auth'}</h1>
-      <LoginForm />
-    </div>
-  )
+  } else {
+		return (
+			<div>
+				<h1>{store.isAuth ? 'Auth' : 'Not auth'}</h1>
+				<LoginForm />
+			</div>
+		)
+	}
+
 })
