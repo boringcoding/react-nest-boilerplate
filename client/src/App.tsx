@@ -1,25 +1,36 @@
-import React, { useContext, useEffect } from 'react'
-import { LoginForm } from './components/LoginForm'
-import { Context } from './index'
-import { observer } from 'mobx-react-lite'
+import React, { useEffect } from 'react'
+import { Route, Switch } from 'react-router-dom'
+import { useTypedSelector } from './hooks/useTypedSelector'
+import { useActions } from './hooks/useActions'
+import { Routes } from './routes'
+import { Home } from './pages/Home'
+import { Login } from './pages/Login'
+import { Signup } from './pages/Signup'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import { Protected } from './pages/Protected'
+import { Loading } from './components/Loading'
+import { NotFound } from './pages/NotFound'
 
-export const App = observer(() => {
-  const { store } = useContext(Context)
+export const App = () => {
+  const { loading } = useTypedSelector((state) => state.auth)
+  const { checkAuth } = useActions()
+
   useEffect(() => {
-    if (localStorage.getItem('token')) {
-      store.checkAuth()
-    }
+    checkAuth()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  if (store.isLoading) {
-    return <div>loading</div>
-  } else {
-		return (
-			<div>
-				<h1>{store.isAuth ? 'Auth' : 'Not auth'}</h1>
-				<LoginForm />
-			</div>
-		)
-	}
+  if (loading) {
+    return <Loading />
+  }
 
-})
+  return (
+    <Switch>
+      <Route exact path={Routes.HOME} component={Home} />
+      <Route path={Routes.LOGIN} component={Login} />
+      <Route path={Routes.SIGNUP} component={Signup} />
+      <ProtectedRoute path={Routes.PROTECTED} component={Protected} />
+      <Route component={NotFound} />
+    </Switch>
+  )
+}

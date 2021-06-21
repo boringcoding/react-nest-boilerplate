@@ -4,13 +4,13 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { v4 as uuid } from 'uuid';
-import * as bcrypt from 'bcrypt';
-import { RegistrationDto } from './dto/registration.dto';
-import { MailService } from '../mail/mail.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { v4 as uuid } from 'uuid';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
+import { RegistrationDto } from './dto/registration.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -69,6 +69,12 @@ export class AuthService {
         password: hashedPassword,
         activationLink: activationHash,
       },
+      select: {
+        id: true,
+        isActivated: true,
+        name: true,
+        email: true,
+      },
     });
 
     const mailResult = await this.mailService.sendActivationMail(
@@ -79,12 +85,19 @@ export class AuthService {
 
     const tokens = this.generateTokens(payload);
     await this.saveToken(user.id, tokens.refresh_token);
-    return tokens;
+    return { ...tokens, user };
   }
 
   async login({ email, password }: RegistrationDto) {
     const user = await this.prismaService.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        isActivated: true,
+        name: true,
+        email: true,
+        password: true,
+      },
     });
 
     if (!user) {
@@ -97,12 +110,14 @@ export class AuthService {
       throw new BadRequestException('Email or password is wrong');
     }
 
+    delete user.password;
+
     const payload = { username: user.name, sub: user.id };
     const tokens = this.generateTokens(payload);
 
     await this.saveToken(user.id, tokens.refresh_token);
 
-    return tokens;
+    return { ...tokens, user };
   }
 
   async refreshToken(refreshToken: string) {
@@ -129,13 +144,19 @@ export class AuthService {
       where: {
         id: userData.sub,
       },
+      select: {
+        id: true,
+        isActivated: true,
+        name: true,
+        email: true,
+      },
     });
 
     const payload = { username: user.name, sub: user.id };
     const tokens = this.generateTokens(payload);
     await this.saveToken(user.id, tokens.refresh_token);
 
-    return tokens;
+    return { ...tokens, user };
   }
 
   async logout(refreshToken: string) {
